@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Modal from "./Modal";
 
 const Navbar = () => {
   const [isDark, setIsDark] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   // Load saved preference on mount
   useEffect(() => {
@@ -50,6 +53,7 @@ const Navbar = () => {
   };
 
   return (
+    <>
     <nav 
       className="flex items-center justify-between px-6 py-4 shadow-md border-b transition-colors"
       style={navStyle}
@@ -100,11 +104,14 @@ const Navbar = () => {
         <button 
           className="px-4 py-2 rounded-lg hover:opacity-80 transition cursor-pointer"
           style={buttonStyle}
+          onClick={() => {setIsModalOpen(true)}}
         >
           Login
         </button>
       </div>
     </nav>
+    {isModalOpen && <Modal onClose={() => setIsModalOpen(false)} />}
+    </>
   );
 };
 

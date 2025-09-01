@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 
 const Dashboard = () => {
+  const MAX_SIZE = 10 * 1024 * 1024;
+
   const [isDragging, setIsDragging] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -21,6 +23,10 @@ const Dashboard = () => {
   const handleFiles = (files) => {
     const file = files[0]; // take only one
     if (!file) return;
+    if (file.size > MAX_SIZE) {
+      alert("File too large! Maximum limit is 10MB")
+      return;
+    }
     setUploadedFile({
       name: file.name,
       type: file.type,
