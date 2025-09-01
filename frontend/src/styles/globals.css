@@ -6,3 +6,16 @@
   transition-duration: 200ms;
   transition-timing-function: ease-in-out;
 }
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-\[shine_1\.5s_linear_infinite\] {
+  animation: shine 1.5s linear infinite;
+}

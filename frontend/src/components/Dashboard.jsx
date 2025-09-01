@@ -7,6 +7,9 @@ const Dashboard = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [jobId, setJobId] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState("");
 
   // Listen for dark mode changes
   useEffect(() => {
@@ -28,6 +31,7 @@ const Dashboard = () => {
       return;
     }
     setUploadedFile({
+      file,
       name: file.name,
       type: file.type,
       size: file.size,
@@ -39,6 +43,56 @@ const Dashboard = () => {
     setUploadedFile(null);
   };
 
+  //Send file to FastAPI
+  const handleStartAsking = async () => {
+    if (!uploadedFile) return;
+  
+    const formData = new FormData();
+    formData.append('file', uploadedFile.file);
+  
+    try {
+      const res = await fetch('http://127.0.0.1:8000/upload', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const data = await res.json();
+      console.log(data);
+  
+      if (data.job_id) {
+        setJobId(data.job_id);
+        setProgress(0);
+        setStatus("processing");
+        pollJobStatus(data.job_id); // start polling
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
+  };
+
+  const pollJobStatus = (jobId) => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/status/${jobId}`);
+        const data = await res.json();
+  
+        if (data) {
+          setProgress(data.progress || 0);
+          setStatus(data.status || "");
+  
+          // Stop polling when done or failed
+          if (data.status === "done" || data.status === "failed") {
+            clearInterval(interval);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching job status:", err);
+        clearInterval(interval);
+      }
+    }, 1000); // poll every second
+  };
+  
   // Theme styles
   const containerStyle = {
     backgroundColor: isDark ? "#111827" : "#ffffff",
@@ -126,10 +180,31 @@ const Dashboard = () => {
 
         {/* Start Asking Button (10px below box) */}
         {uploadedFile && (
-          <button className="mt-[10px] px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition">
-            Start Asking
-          </button>
-        )}
+          <>
+            <button className="mt-[10px] px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition" onClick={handleStartAsking}>
+              Start Asking
+            </button>
+        
+            {jobId && (
+              <div className="w-72 md:w-96 mt-4">
+                <p>Status: {status}</p>
+                <div className="w-full h-4 bg-gray-300 rounded overflow-hidden relative">
+                  <div
+                    className={`h-4 rounded transition-all duration-500`}
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor:
+                        status === "done" ? "#22c55e" : status === "failed" ? "#ef4444" : "#3b82f6",
+                    }}
+                  ></div>
+                  {status === "processing" && (
+                    <div className="absolute top-0 left-0 h-4 w-full bg-gradient-to-r from-white/30 via-white/50 to-white/30 animate-[shine_1.5s_linear_infinite] rounded"></div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}          
       </div>
     </div>
   );
